@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Pseudooo/WasteCollectionCalendar/internal/models"
+	"github.com/Pseudooo/WiltsWaste/internal/models"
 	ics "github.com/arran4/golang-ical"
 )
 

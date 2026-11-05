@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Pseudooo/WasteCollectionCalendar/internal/models"
-	externalHttpClient "github.com/Pseudooo/WasteCollectionCalendar/internal/util"
+	"github.com/Pseudooo/WiltsWaste/internal/models"
+	externalHttpClient "github.com/Pseudooo/WiltsWaste/internal/util"
 	"github.com/PuerkitoBio/goquery"
 )
 
