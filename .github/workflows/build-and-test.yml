@@ -16,10 +16,13 @@ jobs:
           go-version: '1.27' # The Go version to download (if necessary) and use.
 
       - name: 📦 Install Dependencies
+        working-directory: ./api
         run: go mod download
 
       - name: 🔨 Build
+        working-directory: ./api
         run: go build .
 
       - name: 🧪 Test
+        working-directory: ./api
         run: go test .
