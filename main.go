@@ -32,7 +32,7 @@ func main() {
 	}()
 
 	globalLogAttributes := []slog.Attr{
-		slog.String("service.name", "waste-collection-api"),
+		slog.String("service.name", "wilts-waste-api"),
 		slog.String("service.version", "0.1.0"),
 	}
 	loggingHandler := slog.NewJSONHandler(os.Stdout, nil).WithAttrs(globalLogAttributes)
