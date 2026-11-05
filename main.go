@@ -9,10 +9,10 @@ import (
 	"time"
 	"uuid"
 
-	telemetry "github.com/Pseudooo/WasteCollectionCalendar/internal"
-	"github.com/Pseudooo/WasteCollectionCalendar/internal/calendar"
-	govWasteApi "github.com/Pseudooo/WasteCollectionCalendar/internal/repositories"
-	externalHttpClient "github.com/Pseudooo/WasteCollectionCalendar/internal/util"
+	telemetry "github.com/Pseudooo/WiltsWaste/internal"
+	"github.com/Pseudooo/WiltsWaste/internal/calendar"
+	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
+	externalHttpClient "github.com/Pseudooo/WiltsWaste/internal/util"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
@@ -32,7 +32,7 @@ func main() {
 	}()
 
 	globalLogAttributes := []slog.Attr{
-		slog.String("service.name", "waste-collection-api"),
+		slog.String("service.name", "wilts-waste-api"),
 		slog.String("service.version", "0.1.0"),
 	}
 	loggingHandler := slog.NewJSONHandler(os.Stdout, nil).WithAttrs(globalLogAttributes)

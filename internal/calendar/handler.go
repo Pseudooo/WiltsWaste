@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Pseudooo/WasteCollectionCalendar/internal/models"
-	govWasteApi "github.com/Pseudooo/WasteCollectionCalendar/internal/repositories"
+	"github.com/Pseudooo/WiltsWaste/internal/models"
+	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
 	ics "github.com/arran4/golang-ical"
 	"github.com/gin-gonic/gin"
 )

@@ -82,7 +82,7 @@ func InitMetrics(ctx context.Context) (func(context.Context) error, error) {
 func getGlobalAttributesResource() (*resource.Resource, error) {
 	serviceName := os.Getenv("SERVICE__NAME")
 	if serviceName == "" {
-		serviceName = "waste-collection-api"
+		serviceName = "wilts-waste-api"
 	}
 
 	serviceVersion := os.Getenv("SERVICE__VERSION")
