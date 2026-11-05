@@ -27,8 +27,7 @@ jobs:
 
       - name: Build & Publish Image
         uses: docker/build-push-action@v5
-        working-directory: ./api
         with:
-          context: .
+          context: ./api/
           push: true
           tags: ghcr.io/pseudooo/wiltswasteapi:${{ github.event.release.tag_name }}
