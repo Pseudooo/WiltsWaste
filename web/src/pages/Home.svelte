@@ -54,7 +54,7 @@
     <form onsubmit={handleSearch} class="space-y-4">
       <div class="space-y-2">
         <Label for="postcode">Postcode</Label>
-                <div class="flex gap-2">
+        <div class="flex gap-2">
           <Input
             type="text"
             id="postcode"
