@@ -1,12 +1,11 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button/index";
   import { fetchAddressesForPostcode, type PostcodeAddress } from "$lib/api";
-    import Select from "$lib/components/ui/select/select.svelte";
-    import SelectTrigger from "$lib/components/ui/select/select-trigger.svelte";
-    import SelectContent from "$lib/components/ui/select/select-content.svelte";
-    import SelectItem from "$lib/components/ui/select/select-item.svelte";
+  import Select from "$lib/components/ui/select/select.svelte";
+  import SelectTrigger from "$lib/components/ui/select/select-trigger.svelte";
+  import SelectContent from "$lib/components/ui/select/select-content.svelte";
+  import SelectItem from "$lib/components/ui/select/select-item.svelte";
 
-  // State Management
   let postcode = $state('');
   let addressResults = $state<PostcodeAddress[]>([]);
   let selectedAddressId = $state('');
@@ -17,7 +16,6 @@
     addressResults.find(a => a.uprn === selectedAddressId)?.address || "Select your address"
   );
 
-  // Search for addresses via Postcode API
   async function handleSearch(event: Event) {
     event.preventDefault();
     if (!postcode.trim()) return;
@@ -40,7 +38,6 @@
 <div class="flex min-h-screen items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-950">
   <div class="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
     
-    <!-- Header -->
     <div class="space-y-1.5 mb-6">
       <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
         📅 Bin Day Feed
@@ -50,7 +47,6 @@
       </p>
     </div>
 
-    <!-- Search Form -->
     <form onsubmit={handleSearch} class="space-y-4">
       <div class="space-y-2">
         <label for="postcode" class="text-sm font-medium leading-none text-zinc-950 dark:text-zinc-50">
@@ -79,7 +75,6 @@
           Select Address
         </label>
         
-        <!-- Changed from Select.Root to Select -->
         <Select type="single" bind:value={selectedAddressId}>
           <SelectTrigger id="address-select" class="w-full text-left">
             {selectedAddressLabel}
