@@ -10,6 +10,7 @@ import (
 	"uuid"
 
 	telemetry "github.com/Pseudooo/WiltsWaste/internal"
+	"github.com/Pseudooo/WiltsWaste/internal/addresslist"
 	"github.com/Pseudooo/WiltsWaste/internal/calendar"
 	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
 	externalHttpClient "github.com/Pseudooo/WiltsWaste/internal/util"
@@ -45,6 +46,10 @@ func main() {
 		Logger:     logger,
 		Repository: govWasteApiRepository,
 	}
+	addressListHandler := &addresslist.AddressListHandler{
+		Logger:     logger,
+		Repository: govWasteApiRepository,
+	}
 
 	router := gin.New()
 	router.Use(SlogMiddleware(logger))
@@ -52,6 +57,7 @@ func main() {
 	router.Use(gin.Recovery())
 
 	router.GET("/calendar", calendarHandler.GetCalendar)
+	router.GET("/addresslist", addressListHandler.GetAddressList)
 
 	router.Run(":8080")
 }

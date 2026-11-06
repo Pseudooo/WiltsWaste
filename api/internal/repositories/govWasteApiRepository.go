@@ -2,6 +2,7 @@ package govWasteApi
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -54,6 +55,89 @@ func CreateRepository(client *externalHttpClient.ExternalHttpClient, baseUrl str
 	}
 }
 
+type GovApiAddressListError struct {
+	StatusCode   int
+	Url          string
+	Postcode     string
+	ResponseBody string
+}
+
+func (e *GovApiAddressListError) Error() string {
+	return fmt.Errorf("Gov Api AddressList request failed with status: %d", e.StatusCode).Error()
+}
+
+func (e *GovApiAddressListError) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Int("status_code", e.StatusCode),
+		slog.String("url", e.Url),
+		slog.String("postcode", e.Postcode),
+		slog.String("response_body", e.ResponseBody),
+	)
+}
+
+type govApiAddressListResponse struct {
+	Model     govApiAddressListModel `json:"Model"`
+	IsSuccess bool                   `json:"IsSuccess"`
+	Message   string                 `json:"Message"`
+}
+
+type govApiAddressListModel struct {
+	PostcodeAddresses []govApiPostCodeAddress `json:"PostcodeAddresses"`
+}
+
+type govApiPostCodeAddress struct {
+	Address string `json:"Address"`
+	Uprn    string `json:"UPRN"`
+}
+
+func (r *GovWasteApiRepository) GetAddressListFromPostcode(ctx context.Context, postcode string) ([]models.PostcodeAddress, error) {
+	endpoint := r.baseUrl + "/wastecollectiondays/addresslist"
+
+	data := url.Values{}
+	data.Set("Postcode", postcode)
+
+	res, err := r.httpClient.Do(
+		ctx,
+		"get-address-list",
+		http.MethodPost,
+		endpoint,
+		strings.NewReader(data.Encode()),
+		externalHttpClient.WithHeader("User-Agent", "github/Pseudooo/WiltsWaste"),
+		externalHttpClient.WithHeader("Content-Type", "application/x-www-form-urlencoded"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		limitedReader := io.LimitReader(res.Body, 1024)
+		bytes, _ := io.ReadAll(limitedReader)
+
+		return nil, &GovApiAddressListError{
+			StatusCode:   res.StatusCode,
+			Url:          endpoint,
+			Postcode:     postcode,
+			ResponseBody: string(bytes),
+		}
+	}
+
+	var result govApiAddressListResponse
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	var mappedResult = make([]models.PostcodeAddress, len(result.Model.PostcodeAddresses))
+	for _, v := range result.Model.PostcodeAddresses {
+		mappedResult = append(mappedResult, models.PostcodeAddress{
+			Address: v.Address,
+			Uprn:    v.Uprn,
+		})
+	}
+
+	return mappedResult, nil
+}
+
 func (r *GovWasteApiRepository) GetWasteCollectionEvents(ctx context.Context, uprn string, postcode string, month int, year int) ([]models.WasteCollectionEvent, error) {
 	endpoint := r.baseUrl + "/wastecollectiondays/wastecollectioncalendar"
 
@@ -65,11 +149,13 @@ func (r *GovWasteApiRepository) GetWasteCollectionEvents(ctx context.Context, up
 
 	res, err := r.httpClient.Do(
 		ctx,
+		"get-waste-events",
 		http.MethodPost,
 		endpoint,
 		strings.NewReader(data.Encode()),
 		externalHttpClient.WithHeader("User-Agent", "github/Pseudooo/WasteCollectionCalendar"),
-		externalHttpClient.WithHeader("Content-Type", "application/x-www-form-urlencoded"))
+		externalHttpClient.WithHeader("Content-Type", "application/x-www-form-urlencoded"),
+	)
 	if err != nil {
 		return nil, err
 	}

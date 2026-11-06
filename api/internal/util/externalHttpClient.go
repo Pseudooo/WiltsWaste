@@ -31,9 +31,17 @@ func CreateExternalHttpClient(name string) *ExternalHttpClient {
 	}
 }
 
-func (c *ExternalHttpClient) Do(ctx context.Context, method, url string, body io.Reader, opts ...RequestOption) (*http.Response, error) {
+func (c *ExternalHttpClient) Do(
+	ctx context.Context,
+	endpointName string,
+	method string,
+	url string,
+	body io.Reader,
+	opts ...RequestOption,
+) (*http.Response, error) {
 	labeler := &otelhttp.Labeler{}
 	labeler.Add(attribute.String("client.name", c.ClientName))
+	labeler.Add(attribute.String("client.endpoint", endpointName))
 	ctx = otelhttp.ContextWithClientLabeler(ctx, labeler)
 
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
