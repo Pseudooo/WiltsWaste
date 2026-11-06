@@ -1,12 +1,21 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button/index";
   import { fetchAddressesForPostcode, type PostcodeAddress } from "$lib/api";
+    import Select from "$lib/components/ui/select/select.svelte";
+    import SelectTrigger from "$lib/components/ui/select/select-trigger.svelte";
+    import SelectContent from "$lib/components/ui/select/select-content.svelte";
+    import SelectItem from "$lib/components/ui/select/select-item.svelte";
 
   // State Management
   let postcode = $state('');
   let addressResults = $state<PostcodeAddress[]>([]);
+  let selectedAddressId = $state('');
   let isLoading = $state(false);
   let errorMessage = $state('');
+
+  let selectedAddressLabel = $derived(
+    addressResults.find(a => a.uprn === selectedAddressId)?.address || "Select your address"
+  );
 
   // Search for addresses via Postcode API
   async function handleSearch(event: Event) {
@@ -16,6 +25,7 @@
     isLoading = true;
     errorMessage = '';
     addressResults = [];
+    selectedAddressId = ''
 
     try {
       addressResults = await fetchAddressesForPostcode(postcode);
@@ -62,6 +72,29 @@
         </div>
       </div>
     </form>
+
+    {#if addressResults.length > 0}
+      <div class="mt-4 space-y-2 animate-in fade-in-50 duration-200">
+        <label for="address-select">
+          Select Address
+        </label>
+        
+        <!-- Changed from Select.Root to Select -->
+        <Select type="single" bind:value={selectedAddressId}>
+          <SelectTrigger id="address-select" class="w-full text-left">
+            {selectedAddressLabel}
+          </SelectTrigger>
+          <SelectContent>
+            {#each addressResults as addr}
+              <SelectItem value={addr.uprn} label={addr.address}>
+                {addr.address}
+              </SelectItem>
+            {/each}
+          </SelectContent>
+        </Select>
+      </div>
+    {/if}
+
     {#if errorMessage}
       <div class="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-400">
         {errorMessage}
