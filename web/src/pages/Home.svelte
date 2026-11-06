@@ -12,6 +12,7 @@
   import CardContent from "$lib/components/ui/card/card-content.svelte";
   import { Label } from "$lib/components/ui/label";
   import { Input } from "$lib/components/ui/input";
+  import { LoaderCircle } from "lucide-svelte"
 
   let postcode = $state('');
   let addressResults = $state<PostcodeAddress[]>([]);
@@ -65,7 +66,7 @@
           />
           <Button type="submit" disabled={isLoading}>
             {#if isLoading}
-              <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+              <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
               Searching...
             {:else}
               Find
