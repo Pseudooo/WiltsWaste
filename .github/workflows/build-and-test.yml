@@ -41,6 +41,10 @@ jobs:
         with:
           node-version: 26
           cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        working-directory: ./web
+        run: npm i
       
       - name: Build
         working-directory: ./web
