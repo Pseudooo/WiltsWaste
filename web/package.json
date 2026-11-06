@@ -30,6 +30,7 @@
     "vite": "^8.3.6"
   },
   "dependencies": {
-    "lucide-svelte": "^1.0.1"
+    "lucide-svelte": "^1.0.1",
+    "svelte-routing": "^2.13.0"
   }
 }
