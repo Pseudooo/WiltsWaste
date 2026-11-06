@@ -65,6 +65,7 @@ func (r *GovWasteApiRepository) GetWasteCollectionEvents(ctx context.Context, up
 
 	res, err := r.httpClient.Do(
 		ctx,
+		"get-waste-collection-events",
 		http.MethodPost,
 		endpoint,
 		strings.NewReader(data.Encode()),
