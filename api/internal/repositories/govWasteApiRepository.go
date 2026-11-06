@@ -128,11 +128,11 @@ func (r *GovWasteApiRepository) GetAddressListFromPostcode(ctx context.Context, 
 	}
 
 	var mappedResult = make([]models.PostcodeAddress, len(result.Model.PostcodeAddresses))
-	for _, v := range result.Model.PostcodeAddresses {
-		mappedResult = append(mappedResult, models.PostcodeAddress{
+	for i, v := range result.Model.PostcodeAddresses {
+		mappedResult[i] = models.PostcodeAddress{
 			Address: v.Address,
 			Uprn:    v.Uprn,
-		})
+		}
 	}
 
 	return mappedResult, nil
