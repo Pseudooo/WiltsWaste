@@ -1,3 +1,4 @@
+@import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn-svelte/tailwind.css";
 @import "@fontsource-variable/figtree";
@@ -390,13 +391,16 @@ code {
 }
 
 @layer base {
-	* {
-		@apply border-border outline-ring/50;
+  * {
+    /* Use the actual underlying variables instead of the broken @apply alias */
+    border-color: var(--border);
+    outline-color: var(--ring);
   }
-	body {
-		@apply bg-background text-foreground;
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
   }
-	html {
-		@apply font-sans;
+  html {
+    font-family: var(--sans);
   }
 }
