@@ -5,7 +5,8 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+  build-api:
+    name: Build API project
     runs-on: ubuntu-latest
     steps:
       - name: 🛒 Checkout
@@ -26,3 +27,24 @@ jobs:
       - name: 🧪 Test
         working-directory: ./api
         run: go test .
+
+  build-web:
+    name: Build Web Client
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26
+
+      - name: 📦 Install Dependencies
+        working-directory: ./web
+        run: npm i
+      
+      - name: Build
+        working-directory: ./web
+        run: npm run build
+  
