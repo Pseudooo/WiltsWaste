@@ -103,7 +103,7 @@ func (r *GovWasteApiRepository) GetAddressListFromPostcode(ctx context.Context, 
 		endpoint,
 		strings.NewReader(data.Encode()),
 		externalHttpClient.WithHeader("User-Agent", "github/Pseudooo/WiltsWaste"),
-		externalHttpClient.WithHeader("Content-Type", "application/x-www-form-url-encoded"),
+		externalHttpClient.WithHeader("Content-Type", "application/x-www-form-urlencoded"),
 	)
 	if err != nil {
 		return nil, err
