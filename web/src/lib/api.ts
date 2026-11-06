@@ -17,4 +17,13 @@ export async function fetchAddressesForPostcode(postcode: string): Promise<Postc
 
     const data: PostcodeAddress[] = await response.json();
     return data;
-} 
+}
+
+export function getWebCalUrl(postcode: string, uprn: string): string {
+    const url = new URL("/calendar", baseUrl)
+    url.protocol = "webcal";
+    url.searchParams.append("postcode", postcode);
+    url.searchParams.append("uprn", uprn);
+
+    return url.toString().replace("https://", "webcal://");
+}

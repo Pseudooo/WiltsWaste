@@ -13,6 +13,7 @@
   import { Label } from "$lib/components/ui/label";
   import { Input } from "$lib/components/ui/input";
   import { LoaderCircle } from "lucide-svelte"
+    import { Link } from "svelte-routing";
 
   let postcode = $state('');
   let addressResults = $state<PostcodeAddress[]>([]);
@@ -95,6 +96,12 @@
         </SelectContent>
       </Select>
     </div>
+    {/if}
+
+    {#if selectedAddressId}
+    <Link to="/schedule?postcode={encodeURIComponent(postcode)}&uprn={selectedAddressId}">
+      <Button>View Schedule</Button>
+    </Link>
     {/if}
   
     {#if errorMessage}
