@@ -8,6 +8,6 @@ type WasteCollectionEvent struct {
 }
 
 type PostcodeAddress struct {
-	Address string
-	Uprn    string
+	Address string `json:"address"`
+	Uprn    string `json:"uprn"`
 }

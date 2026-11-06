@@ -14,6 +14,7 @@ import (
 	"github.com/Pseudooo/WiltsWaste/internal/calendar"
 	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
 	externalHttpClient "github.com/Pseudooo/WiltsWaste/internal/util"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
@@ -55,6 +56,7 @@ func main() {
 	router.Use(SlogMiddleware(logger))
 	router.Use(otelgin.Middleware("waste-collection-api"))
 	router.Use(gin.Recovery())
+	router.Use(cors.Default())
 
 	router.GET("/calendar", calendarHandler.GetCalendar)
 	router.GET("/addresslist", addressListHandler.GetAddressList)
