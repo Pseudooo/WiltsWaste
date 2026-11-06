@@ -7,10 +7,6 @@
 </script>
 
 <Router {url}>
-  <nav class="flex gap-4 p-4 border-b border-border bg-card">
-    <Link to="/" class="text-primary hover:underline font-medium">Home</Link>
-  </nav>
-
   <main id="center" class="w-full max-w-4xl mx-auto p-6">
     <Route path="/">
       <Home />
