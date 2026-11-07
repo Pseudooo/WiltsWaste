@@ -36,15 +36,25 @@
         Subscribe to get automatic garbage collection updates synced straight to your device.
       </p>
 
-      <Button
-        href={googleCalendarSubscriptionUrl} 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        class="w-full sm:w-auto gap-2"
-      >
-        <CalendarPlus class="h-4 w-4" />
-        Subscribe on Google Calendar
-      </Button>
+      <div>
+        <Button
+          href={googleCalendarSubscriptionUrl} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="w-full sm:w-auto gap-2"
+        >
+          <CalendarPlus class="h-4 w-4" />
+          Subscribe on Google Calendar
+        </Button>
+        <Button
+          href={getWebCalUrl(postcode, uprn)}
+          rel="noopener noreferrer" 
+          class="w-full sm:w-auto gap-2"
+        >
+          <CalendarPlus class="h-4 w-4" />
+          Subscribe on Device Calendar
+        </Button>
+      </div>
     </div>
   </CardContent>
 </Card>
