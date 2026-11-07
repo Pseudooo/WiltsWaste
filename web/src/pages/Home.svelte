@@ -84,13 +84,17 @@
       </Label>
       
       <Select type="single" bind:value={selectedAddressId}>
-        <SelectTrigger id="address-select" class="w-full text-left">
-          {selectedAddressLabel}
+        <SelectTrigger id="address-select" class="w-full max-w-full overflow-hidden text-left">
+          <span class="block truncate text-ellipsis whitespace-nowrap pr-2">
+            {selectedAddressLabel}
+          </span>
         </SelectTrigger>
         <SelectContent>
           {#each addressResults as addr}
-            <SelectItem value={addr.uprn} label={addr.address}>
-              {addr.address}
+            <SelectItem value={addr.uprn} label={addr.address} class="max-w-full overflow-hidden">
+              <span class="block truncate text-ellipsis whitespace-nowrap">
+                {addr.address}
+              </span>
             </SelectItem>
           {/each}
         </SelectContent>
