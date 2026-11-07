@@ -48,6 +48,8 @@ jobs:
       - name: Build & Publish Image
         uses: docker/build-push-action@v5
         with:
+          build-args:
+            - VITE_API_BASE_URL='https://api.wiltswaste.uk'
           context: ./web/
           push: true
           tags: ghcr.io/pseudooo/wiltswasteweb:${{ github.event.release.tag_name }}
