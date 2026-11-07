@@ -11,7 +11,7 @@
   let postcode = $derived(searchParams.get("postcode") || "");
   let uprn = $derived(searchParams.get("uprn") || "");
 
-  const googleCalendarSubscriptionUrl = $derived(`https://www.google.com/calendar/render?cid=${getWebCalUrl(postcode, uprn).toString()}`);
+  const googleCalendarSubscriptionUrl = $derived(`https://www.google.com/calendar/render?cid=${encodeURIComponent(getWebCalUrl(postcode, uprn))}`);
 
 </script>
 
