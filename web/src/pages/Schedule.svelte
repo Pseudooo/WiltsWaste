@@ -2,10 +2,12 @@
   import { getWebCalUrl } from "$lib/api";
   import Button from "$lib/components/ui/button/button.svelte";
   import CardContent from "$lib/components/ui/card/card-content.svelte";
+  import CardFooter from "$lib/components/ui/card/card-footer.svelte";
   import CardHeader from "$lib/components/ui/card/card-header.svelte";
   import CardTitle from "$lib/components/ui/card/card-title.svelte";
   import Card from "$lib/components/ui/card/card.svelte";
-  import { CalendarDays, CalendarPlus } from "lucide-svelte";
+  import { ArrowLeft, CalendarDays, CalendarPlus } from "lucide-svelte";
+  import { Link } from "svelte-routing";
 
   let searchParams = $derived(new URLSearchParams(window.location.search));
   let postcode = $derived(searchParams.get("postcode") || "");
@@ -57,4 +59,12 @@
       </div>
     </div>
   </CardContent>
+  <CardFooter class="justify-center border-t pt-4">
+    <Link to="/">
+      <Button variant="outline">
+        <ArrowLeft class="w-4 h-4"/>
+        Back to search
+      </Button>
+    </Link>
+  </CardFooter>
 </Card>
