@@ -1,0 +1,23 @@
+name: WiltsWaste
+services:
+  web:
+    build:
+      context: web
+    environment:
+      VITE_API_BASE_URL: "http://localhost:8080"
+    networks:
+      - server-side
+    ports:
+      - 8081:8080
+
+  api:
+    build:
+      context: api
+    networks:
+      - server-side
+    ports:
+      - 8080:8080
+
+networks:
+  server-side: {}
+    
