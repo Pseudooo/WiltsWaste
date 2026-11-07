@@ -8,12 +8,15 @@
   import Card from "$lib/components/ui/card/card.svelte";
   import CardHeader from "$lib/components/ui/card/card-header.svelte";
   import CardTitle from "$lib/components/ui/card/card-title.svelte";
-  import { CalendarDays } from "lucide-svelte";
+  import { AlertCircle, AlertCircleIcon, CalendarDays } from "lucide-svelte";
   import CardContent from "$lib/components/ui/card/card-content.svelte";
   import { Label } from "$lib/components/ui/label";
   import { Input } from "$lib/components/ui/input";
   import { LoaderCircle } from "lucide-svelte"
     import { Link } from "svelte-routing";
+    import { Alert } from "$lib/components/ui/alert";
+    import AlertTitle from "$lib/components/ui/alert/alert-title.svelte";
+    import AlertDescription from "$lib/components/ui/alert/alert-description.svelte";
 
   let postcode = $state('');
   let addressResults = $state<PostcodeAddress[]>([]);
@@ -36,6 +39,10 @@
 
     try {
       addressResults = await fetchAddressesForPostcode(postcode);
+
+      if (addressResults.length == 0) {
+        errorMessage = "It looks like there weren't any results for this postcode :("
+      }
     } catch (error: any) {
       errorMessage = error.message || 'Something went wrong.';
     } finally {
@@ -109,9 +116,9 @@
     {/if}
   
     {#if errorMessage}
-      <div class="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-400">
-        {errorMessage}
-      </div>
+      <Alert variant="destructive">
+        <AlertDescription>{errorMessage}</AlertDescription>
+      </Alert>
     {/if}
   </CardContent>
 </Card>
