@@ -19,14 +19,14 @@ type DatabaseConfiguration struct {
 }
 
 var (
-	ErrDbHostnameNotSet = errors.New("Failed to read DB__HOST from environment")
+	ErrDbHostnameNotSet = errors.New("Failed to read DB__HOSTNAME from environment")
 	ErrDbDatabaseNotSet = errors.New("Failed to read DB__DATABASE from environment")
 	ErrDbUserNotSet     = errors.New("Failed to read DB__USER from environment")
 	ErrDbPasswordNotSet = errors.New("Failed to read DB__PASSWORD from environment")
 )
 
 func ReadDatabaseConfigurationFromEnv() (DatabaseConfiguration, error) {
-	host := os.Getenv("DB__HOST")
+	host := os.Getenv("DB__HOSTNAME")
 	if host == "" {
 		return DatabaseConfiguration{}, ErrDbHostnameNotSet
 	}

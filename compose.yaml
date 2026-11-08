@@ -11,8 +11,16 @@ services:
   api:
     build:
       context: ./api
+    environment:
+      DB__HOSTNAME: database
+      DB__DATABASE: postgres
+      DB__USER: postgres
+      DB__PASSWORD: postgres
     ports:
       - 25565:8080
+    depends_on:
+      database:
+        condition: service_healthy
 
   migrations:
     build:

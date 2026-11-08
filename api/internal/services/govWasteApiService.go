@@ -28,6 +28,7 @@ func NewGovWasteApiService(
 ) GovWasteApiService {
 	return &govWasteApiService{
 		repository: govWasteApiRepository,
+		queries:    queries,
 	}
 }
 
