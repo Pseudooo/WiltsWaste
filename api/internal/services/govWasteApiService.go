@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/Pseudooo/WiltsWaste/internal/db"
 	"github.com/Pseudooo/WiltsWaste/internal/models"
 	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
+	"github.com/Pseudooo/WiltsWaste/internal/telemetry"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -33,6 +35,8 @@ func NewGovWasteApiService(
 }
 
 func (s *govWasteApiService) GetAddressListFromPostcode(ctx context.Context, postcode string) ([]models.PostcodeAddress, error) {
+	ctxLogger := telemetry.GetLoggerFromContext(ctx)
+
 	cachedResponse, err := s.queries.GetAddressListCacheRow(ctx, postcode)
 	if err == nil {
 		var addressList []models.PostcodeAddress
@@ -40,7 +44,7 @@ func (s *govWasteApiService) GetAddressListFromPostcode(ctx context.Context, pos
 			return addressList, nil
 		}
 	} else if !errors.Is(err, pgx.ErrNoRows) {
-		// TODO: Log db failure here
+		ctxLogger.Error("Failed to query address list cache table", slog.Any("error", err))
 	}
 
 	addressList, err := s.repository.GetAddressListFromPostcode(ctx, postcode)
@@ -56,7 +60,11 @@ func (s *govWasteApiService) GetAddressListFromPostcode(ctx context.Context, pos
 			AddressList: addressListJsonBytes,
 		})
 		if err != nil {
-			// TODO: More logging
+			ctxLogger.Error(
+				"Failed to insert address list cache row",
+				slog.String("postcode", postcode),
+				slog.Any("error", err),
+			)
 		}
 	}
 
