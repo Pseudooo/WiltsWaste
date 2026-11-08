@@ -14,6 +14,7 @@ import (
 	telemetry "github.com/Pseudooo/WiltsWaste/internal"
 	"github.com/Pseudooo/WiltsWaste/internal/addresslist"
 	"github.com/Pseudooo/WiltsWaste/internal/calendar"
+	"github.com/Pseudooo/WiltsWaste/internal/configuration"
 	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
 	externalHttpClient "github.com/Pseudooo/WiltsWaste/internal/util"
 	"github.com/gin-contrib/cors"
@@ -43,6 +44,17 @@ func main() {
 	}
 	loggingHandler := slog.NewJSONHandler(os.Stdout, nil).WithAttrs(globalLogAttributes)
 	logger := slog.New(loggingHandler)
+
+	databaseConfiguration, err := configuration.ReadDatabaseConfigurationFromEnv()
+	if err != nil {
+		panic(fmt.Errorf("Failed to read database configuration: %w", err))
+	}
+
+	sqlDb, err := databaseConfiguration.CreateDatabase(ctx)
+	if err != nil {
+		panic(err)
+	}
+	defer sqlDb.Close()
 
 	govWasteApiClient := externalHttpClient.CreateExternalHttpClient("gov-waste-api")
 	govWasteApiRepository := govWasteApi.CreateRepository(govWasteApiClient, "https://ilambassadorformsprod.azurewebsites.net")
