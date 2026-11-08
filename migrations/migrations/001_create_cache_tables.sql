@@ -16,7 +16,7 @@ create table if not exists waste_collection_events_cache(
     created_at timestamp,
     expires_at timestamp,
     waste_collection_events json
-)
+);
 
 -- +goose Down
 drop table if exists address_list_cache;
