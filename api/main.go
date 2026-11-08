@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 	"uuid"
 
@@ -22,7 +24,9 @@ import (
 const LoggerKey = "slog_logger"
 
 func main() {
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	shutdownMetrics, err := telemetry.InitMetrics(ctx)
 	if err != nil {
 		panic(err)
