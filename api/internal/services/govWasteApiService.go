@@ -84,5 +84,74 @@ func (s *govWasteApiService) GetWasteCollectionEvents(
 	month int,
 	year int,
 ) ([]models.WasteCollectionEvent, error) {
-	return s.repository.GetWasteCollectionEvents(ctx, uprn, postcode, month, year)
+	ctxLogger := telemetry.GetLoggerFromContext(ctx)
+
+	cachedResponse, err := s.queries.GetWasteCollectionEventsCacheRow(ctx, db.GetWasteCollectionEventsCacheRowParams{
+		Uprn:     uprn,
+		Postcode: postcode,
+		Month:    int32(month),
+		Year:     int32(year),
+	})
+	if err == nil {
+		var collectionEvents []models.WasteCollectionEvent
+		if err := json.Unmarshal(cachedResponse, &collectionEvents); err != nil {
+			ctxLogger.Error(
+				"Failed to deserialise cache row",
+				slog.String("uprn", uprn),
+				slog.String("postcode", postcode),
+				slog.Int("month", month),
+				slog.Int("year", year),
+				slog.Any("error", err),
+			)
+		} else {
+			return collectionEvents, nil
+		}
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		ctxLogger.Error(
+			"Failed to query cache row for waste collection events",
+			slog.String("uprn", uprn),
+			slog.String("postcode", postcode),
+			slog.Int("month", month),
+			slog.Int("year", year),
+			slog.Any("error", err),
+		)
+	}
+
+	wasteCollectionEvents, err := s.repository.GetWasteCollectionEvents(ctx, uprn, postcode, month, year)
+	if err != nil {
+		return nil, err
+	}
+
+	wasteCollectionEventsBytes, err := json.Marshal(&wasteCollectionEvents)
+	if err != nil {
+		ctxLogger.Error(
+			"Failed to serialize waste collection events to json",
+			slog.String("uprn", uprn),
+			slog.String("postcode", postcode),
+			slog.Int("month", month),
+			slog.Int("year", year),
+			slog.Any("error", err),
+		)
+		return wasteCollectionEvents, nil
+	}
+
+	err = s.queries.InsertWasteCollectionEventsCacheRow(ctx, db.InsertWasteCollectionEventsCacheRowParams{
+		Uprn:                  uprn,
+		Postcode:              postcode,
+		Month:                 int32(month),
+		Year:                  int32(year),
+		WasteCollectionEvents: wasteCollectionEventsBytes,
+	})
+	if err != nil {
+		ctxLogger.Error(
+			"Failed to insert waste collection events into cache",
+			slog.String("uprn", uprn),
+			slog.String("postcode", postcode),
+			slog.Int("month", month),
+			slog.Int("year", year),
+			slog.Any("error", err),
+		)
+	}
+
+	return wasteCollectionEvents, nil
 }

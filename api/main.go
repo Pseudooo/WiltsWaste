@@ -61,8 +61,8 @@ func main() {
 	govWasteApiService := services.NewGovWasteApiService(govWasteApiRepository, queries)
 
 	calendarHandler := &calendar.CalendarHandler{
-		Logger:     globalLogger,
-		Repository: govWasteApiRepository,
+		Logger:          globalLogger,
+		WasteApiService: govWasteApiRepository,
 	}
 	addressListHandler := &addresslist.AddressListHandler{
 		Logger:          globalLogger,
