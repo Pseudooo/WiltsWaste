@@ -1,6 +1,6 @@
 -- name: InsertWasteCollectionEventsCacheRow :exec
-insert into waste_collection_events_cache (uprn, postcode, month, year, waste_collection_events)
-    values (@uprn, @postcode, @month, @year, @waste_collection_events);
+insert into waste_collection_events_cache (uprn, postcode, month, year, waste_collection_events, created_at, expires_at)
+    values (@uprn, @postcode, @month, @year, @waste_collection_events, NOW(), @expires_at);
 
 -- name: GetWasteCollectionEventsCacheRow :one
 select waste_collection_events

@@ -140,6 +140,7 @@ func (s *govWasteApiService) GetWasteCollectionEvents(
 		Postcode:              postcode,
 		Month:                 int32(month),
 		Year:                  int32(year),
+		ExpiresAt:             pgtype.Timestamp{Valid: true, Time: time.Now().AddDate(0, 0, 7)},
 		WasteCollectionEvents: wasteCollectionEventsBytes,
 	})
 	if err != nil {

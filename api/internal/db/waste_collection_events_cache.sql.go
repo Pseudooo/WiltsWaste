@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getWasteCollectionEventsCacheRow = `-- name: GetWasteCollectionEventsCacheRow :one
@@ -41,8 +43,8 @@ func (q *Queries) GetWasteCollectionEventsCacheRow(ctx context.Context, arg GetW
 }
 
 const insertWasteCollectionEventsCacheRow = `-- name: InsertWasteCollectionEventsCacheRow :exec
-insert into waste_collection_events_cache (uprn, postcode, month, year, waste_collection_events)
-    values ($1, $2, $3, $4, $5)
+insert into waste_collection_events_cache (uprn, postcode, month, year, waste_collection_events, created_at, expires_at)
+    values ($1, $2, $3, $4, $5, NOW(), $6)
 `
 
 type InsertWasteCollectionEventsCacheRowParams struct {
@@ -51,6 +53,7 @@ type InsertWasteCollectionEventsCacheRowParams struct {
 	Month                 int32
 	Year                  int32
 	WasteCollectionEvents []byte
+	ExpiresAt             pgtype.Timestamp
 }
 
 func (q *Queries) InsertWasteCollectionEventsCacheRow(ctx context.Context, arg InsertWasteCollectionEventsCacheRowParams) error {
@@ -60,6 +63,7 @@ func (q *Queries) InsertWasteCollectionEventsCacheRow(ctx context.Context, arg I
 		arg.Month,
 		arg.Year,
 		arg.WasteCollectionEvents,
+		arg.ExpiresAt,
 	)
 	return err
 }
