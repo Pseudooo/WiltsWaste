@@ -15,6 +15,7 @@ import (
 	"github.com/Pseudooo/WiltsWaste/internal/addresslist"
 	"github.com/Pseudooo/WiltsWaste/internal/calendar"
 	"github.com/Pseudooo/WiltsWaste/internal/configuration"
+	"github.com/Pseudooo/WiltsWaste/internal/db"
 	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
 	"github.com/Pseudooo/WiltsWaste/internal/services"
 	externalHttpClient "github.com/Pseudooo/WiltsWaste/internal/util"
@@ -57,10 +58,12 @@ func main() {
 	}
 	defer sqlDb.Close()
 
+	queries := db.New(sqlDb)
+
 	govWasteApiClient := externalHttpClient.CreateExternalHttpClient("gov-waste-api")
 	govWasteApiRepository := govWasteApi.CreateRepository(govWasteApiClient, "https://ilambassadorformsprod.azurewebsites.net")
 
-	govWasteApiService := services.NewGovWasteApiService(govWasteApiRepository)
+	govWasteApiService := services.NewGovWasteApiService(govWasteApiRepository, queries)
 
 	calendarHandler := &calendar.CalendarHandler{
 		Logger:     logger,
