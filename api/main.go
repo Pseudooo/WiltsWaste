@@ -11,13 +11,13 @@ import (
 	"time"
 	"uuid"
 
-	telemetry "github.com/Pseudooo/WiltsWaste/internal"
 	"github.com/Pseudooo/WiltsWaste/internal/addresslist"
 	"github.com/Pseudooo/WiltsWaste/internal/calendar"
 	"github.com/Pseudooo/WiltsWaste/internal/configuration"
 	"github.com/Pseudooo/WiltsWaste/internal/db"
 	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
 	"github.com/Pseudooo/WiltsWaste/internal/services"
+	"github.com/Pseudooo/WiltsWaste/internal/telemetry"
 	externalHttpClient "github.com/Pseudooo/WiltsWaste/internal/util"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -40,12 +40,7 @@ func main() {
 		}
 	}()
 
-	globalLogAttributes := []slog.Attr{
-		slog.String("service.name", "wilts-waste-api"),
-		slog.String("service.version", "0.1.0"),
-	}
-	loggingHandler := slog.NewJSONHandler(os.Stdout, nil).WithAttrs(globalLogAttributes)
-	logger := slog.New(loggingHandler)
+	globalLogger := telemetry.Logger
 
 	databaseConfiguration, err := configuration.ReadDatabaseConfigurationFromEnv()
 	if err != nil {
@@ -66,16 +61,16 @@ func main() {
 	govWasteApiService := services.NewGovWasteApiService(govWasteApiRepository, queries)
 
 	calendarHandler := &calendar.CalendarHandler{
-		Logger:     logger,
+		Logger:     globalLogger,
 		Repository: govWasteApiRepository,
 	}
 	addressListHandler := &addresslist.AddressListHandler{
-		Logger:          logger,
+		Logger:          globalLogger,
 		WasteApiService: govWasteApiService,
 	}
 
 	router := gin.New()
-	router.Use(SlogMiddleware(logger))
+	router.Use(SlogMiddleware(globalLogger))
 	router.Use(otelgin.Middleware("waste-collection-api"))
 	router.Use(gin.Recovery())
 	router.Use(cors.Default())
