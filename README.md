@@ -4,9 +4,17 @@
 Small web application built with svelte & go that allows users to subscribe to a live calendar stream for their bin days, all information
 used to drive the calendars is collected from the official [wiltshire.gov.uk](https://www.wiltshire.gov.uk/rubbish-and-recycling) site.
 
-This site is deployed and publicly available at [wiltswaste.uk](https://wiltswaste.uk/)
+This site is publicly available at [wiltswaste.uk](https://wiltswaste.uk/)
 
 ### Running locally
+
+#### Docker Compose
+
+If you have docker installed on your system then the docker compose file can be used to run the application locally, simply running:
+```
+docker compose up --build
+```
+In the repository root directoy will make the website available at `http://localhost:8080`
 
 #### API
 
