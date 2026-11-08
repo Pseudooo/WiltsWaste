@@ -16,3 +16,14 @@ type AddressListCache struct {
 	ExpiresAt   pgtype.Timestamp
 	AddressList []byte
 }
+
+type WasteCollectionEventsCache struct {
+	ID                    uuid.UUID
+	Uprn                  string
+	Postcode              string
+	Month                 int32
+	Year                  int32
+	CreatedAt             pgtype.Timestamp
+	ExpiresAt             pgtype.Timestamp
+	WasteCollectionEvents []byte
+}

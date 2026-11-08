@@ -17,6 +17,7 @@ import (
 
 type GovWasteApiService interface {
 	GetAddressListFromPostcode(ctx context.Context, postcode string) ([]models.PostcodeAddress, error)
+	GetWasteCollectionEvents(ctx context.Context, uprn string, postcode string, month int, year int) ([]models.WasteCollectionEvent, error)
 }
 
 type govWasteApiService struct {
@@ -74,4 +75,14 @@ func (s *govWasteApiService) GetAddressListFromPostcode(ctx context.Context, pos
 	}
 
 	return addressList, nil
+}
+
+func (s *govWasteApiService) GetWasteCollectionEvents(
+	ctx context.Context,
+	uprn string,
+	postcode string,
+	month int,
+	year int,
+) ([]models.WasteCollectionEvent, error) {
+	return s.repository.GetWasteCollectionEvents(ctx, uprn, postcode, month, year)
 }
