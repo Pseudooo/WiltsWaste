@@ -43,13 +43,18 @@ func (e *GovApiError) LogValue() slog.Value {
 	)
 }
 
-type GovWasteApiRepository struct {
+type GovWasteApiRepository interface {
+	GetAddressListFromPostcode(ctx context.Context, postcode string) ([]models.PostcodeAddress, error)
+	GetWasteCollectionEvents(ctx context.Context, uprn string, postcode string, month int, year int) ([]models.WasteCollectionEvent, error)
+}
+
+type govWasteApiRepository struct {
 	httpClient *externalHttpClient.ExternalHttpClient
 	baseUrl    string
 }
 
-func CreateRepository(client *externalHttpClient.ExternalHttpClient, baseUrl string) *GovWasteApiRepository {
-	return &GovWasteApiRepository{
+func CreateRepository(client *externalHttpClient.ExternalHttpClient, baseUrl string) GovWasteApiRepository {
+	return &govWasteApiRepository{
 		httpClient: client,
 		baseUrl:    baseUrl,
 	}
@@ -90,7 +95,7 @@ type govApiPostCodeAddress struct {
 	Uprn    string `json:"UPRN"`
 }
 
-func (r *GovWasteApiRepository) GetAddressListFromPostcode(ctx context.Context, postcode string) ([]models.PostcodeAddress, error) {
+func (r *govWasteApiRepository) GetAddressListFromPostcode(ctx context.Context, postcode string) ([]models.PostcodeAddress, error) {
 	endpoint := r.baseUrl + "/wastecollectiondays/addresslist"
 
 	data := url.Values{}
@@ -138,7 +143,7 @@ func (r *GovWasteApiRepository) GetAddressListFromPostcode(ctx context.Context, 
 	return mappedResult, nil
 }
 
-func (r *GovWasteApiRepository) GetWasteCollectionEvents(ctx context.Context, uprn string, postcode string, month int, year int) ([]models.WasteCollectionEvent, error) {
+func (r *govWasteApiRepository) GetWasteCollectionEvents(ctx context.Context, uprn string, postcode string, month int, year int) ([]models.WasteCollectionEvent, error) {
 	endpoint := r.baseUrl + "/wastecollectiondays/wastecollectioncalendar"
 
 	data := url.Values{}

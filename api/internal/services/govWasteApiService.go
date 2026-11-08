@@ -21,12 +21,12 @@ type GovWasteApiService interface {
 }
 
 type govWasteApiService struct {
-	repository *govWasteApi.GovWasteApiRepository
+	repository govWasteApi.GovWasteApiRepository
 	queries    *db.Queries
 }
 
 func NewGovWasteApiService(
-	govWasteApiRepository *govWasteApi.GovWasteApiRepository,
+	govWasteApiRepository govWasteApi.GovWasteApiRepository,
 	queries *db.Queries,
 ) GovWasteApiService {
 	return &govWasteApiService{
