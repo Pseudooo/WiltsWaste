@@ -53,7 +53,7 @@ func (s *govWasteApiService) GetAddressListFromPostcode(ctx context.Context, pos
 	}
 
 	addressListJsonBytes, err := json.Marshal(addressList)
-	if err != nil {
+	if err == nil {
 		err = s.queries.InsertAddressListCacheRow(ctx, db.InsertAddressListCacheRowParams{
 			Postcode:    postcode,
 			ExpiresAt:   pgtype.Timestamp{Valid: true, Time: time.Now().AddDate(0, 0, 1)},
@@ -66,6 +66,11 @@ func (s *govWasteApiService) GetAddressListFromPostcode(ctx context.Context, pos
 				slog.Any("error", err),
 			)
 		}
+	} else {
+		ctxLogger.Error(
+			"Failed to serialise address list response",
+			slog.Any("error", err),
+		)
 	}
 
 	return addressList, nil
