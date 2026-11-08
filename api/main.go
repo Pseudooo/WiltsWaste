@@ -62,7 +62,7 @@ func main() {
 
 	calendarHandler := &calendar.CalendarHandler{
 		Logger:          globalLogger,
-		WasteApiService: govWasteApiRepository,
+		WasteApiService: govWasteApiService,
 	}
 	addressListHandler := &addresslist.AddressListHandler{
 		Logger:          globalLogger,
