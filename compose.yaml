@@ -14,12 +14,22 @@ services:
     ports:
       - 25565:8080
 
+  migrations:
+    build:
+      context: ./migrations
+    environment:
+      DB__HOSTNAME: database
+      DB__DATABASE: postgres
+      DB__USER: postgres
+      DB__PASSWORD: postgres
+    depends_on:
+      database:
+        condition: service_healthy
+
   database:
     image: postgres:18.6
     environment:
       - POSTGRES_PASSWORD=postgres
-    networks:
-      - server-side
     ports:
       - 5432:5432
     healthcheck:
