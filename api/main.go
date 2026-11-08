@@ -16,6 +16,7 @@ import (
 	"github.com/Pseudooo/WiltsWaste/internal/calendar"
 	"github.com/Pseudooo/WiltsWaste/internal/configuration"
 	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
+	"github.com/Pseudooo/WiltsWaste/internal/services"
 	externalHttpClient "github.com/Pseudooo/WiltsWaste/internal/util"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -59,13 +60,15 @@ func main() {
 	govWasteApiClient := externalHttpClient.CreateExternalHttpClient("gov-waste-api")
 	govWasteApiRepository := govWasteApi.CreateRepository(govWasteApiClient, "https://ilambassadorformsprod.azurewebsites.net")
 
+	govWasteApiService := services.NewGovWasteApiService(govWasteApiRepository)
+
 	calendarHandler := &calendar.CalendarHandler{
 		Logger:     logger,
 		Repository: govWasteApiRepository,
 	}
 	addressListHandler := &addresslist.AddressListHandler{
-		Logger:     logger,
-		Repository: govWasteApiRepository,
+		Logger:          logger,
+		WasteApiService: govWasteApiService,
 	}
 
 	router := gin.New()
