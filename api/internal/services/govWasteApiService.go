@@ -48,8 +48,10 @@ func (s *govWasteApiService) GetAddressListFromPostcode(ctx context.Context, pos
 	cachedResponse, err := s.queries.GetAddressListCacheRow(ctx, postcode)
 	if err == nil {
 		var addressList []models.PostcodeAddress
-		if err := json.Unmarshal(cachedResponse, &addressList); err != nil {
+		if err := json.Unmarshal(cachedResponse, &addressList); err == nil {
 			return addressList, nil
+		} else {
+			ctxLogger.Error("Failed to deserialise cache result", slog.Any("error", err))
 		}
 	} else if !errors.Is(err, pgx.ErrNoRows) {
 		ctxLogger.Error("Failed to query address list cache table", slog.Any("error", err))
