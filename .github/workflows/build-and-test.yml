@@ -26,7 +26,7 @@ jobs:
 
       - name: 🧪 Test
         working-directory: ./api
-        run: go test .
+        run: go test ./...
 
   build-web:
     name: Build Web Client
