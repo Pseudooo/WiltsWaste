@@ -15,6 +15,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type GovWasteApiServiceQueries interface {
+	GetAddressListCacheRow(ctx context.Context, postcode string) ([]byte, error)
+	InsertAddressListCacheRow(ctx context.Context, params db.InsertAddressListCacheRowParams) error
+	GetWasteCollectionEventsCacheRow(ctx context.Context, params db.GetWasteCollectionEventsCacheRowParams) ([]byte, error)
+	InsertWasteCollectionEventsCacheRow(ctx context.Context, params db.InsertWasteCollectionEventsCacheRowParams) error
+}
+
 type GovWasteApiService interface {
 	GetAddressListFromPostcode(ctx context.Context, postcode string) ([]models.PostcodeAddress, error)
 	GetWasteCollectionEvents(ctx context.Context, uprn string, postcode string, month int, year int) ([]models.WasteCollectionEvent, error)
@@ -22,12 +29,12 @@ type GovWasteApiService interface {
 
 type govWasteApiService struct {
 	repository govWasteApi.GovWasteApiRepository
-	queries    *db.Queries
+	queries    GovWasteApiServiceQueries
 }
 
 func NewGovWasteApiService(
 	govWasteApiRepository govWasteApi.GovWasteApiRepository,
-	queries *db.Queries,
+	queries GovWasteApiServiceQueries,
 ) GovWasteApiService {
 	return &govWasteApiService{
 		repository: govWasteApiRepository,
