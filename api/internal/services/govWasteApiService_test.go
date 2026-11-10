@@ -306,4 +306,8 @@ func TestGetAddressList_GivenCacheEmpty_WhenCalledAndApiFails_ThenErrorReturned_
 	// Assert
 	assert.Nil(t, addressListResults)
 	assert.Error(t, err)
+
+	mockQueries.AssertExpectations(t)
+	mockRepository.AssertExpectations(t)
+	mockQueries.AssertNotCalled(t, "InsertAddressListCacheRow", mock.Anything, mock.Anything)
 }
