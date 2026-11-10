@@ -50,9 +50,10 @@ func (s *govWasteApiService) GetAddressListFromPostcode(ctx context.Context, pos
 		var addressList []models.PostcodeAddress
 		if err := json.Unmarshal(cachedResponse, &addressList); err == nil {
 			return addressList, nil
-		} else {
-			ctxLogger.Error("Failed to deserialise cache result", slog.Any("error", err))
 		}
+
+		// Json deserialisation failed from the cache
+		ctxLogger.Error("Failed to deserialise cache row for address list", slog.Any("error", err))
 	} else if !errors.Is(err, pgx.ErrNoRows) {
 		ctxLogger.Error("Failed to query address list cache table", slog.Any("error", err))
 	}
@@ -103,18 +104,18 @@ func (s *govWasteApiService) GetWasteCollectionEvents(
 	})
 	if err == nil {
 		var collectionEvents []models.WasteCollectionEvent
-		if err := json.Unmarshal(cachedResponse, &collectionEvents); err != nil {
-			ctxLogger.Error(
-				"Failed to deserialise cache row",
-				slog.String("uprn", uprn),
-				slog.String("postcode", postcode),
-				slog.Int("month", month),
-				slog.Int("year", year),
-				slog.Any("error", err),
-			)
-		} else {
+		if err := json.Unmarshal(cachedResponse, &collectionEvents); err == nil {
 			return collectionEvents, nil
 		}
+
+		ctxLogger.Error(
+			"Failed to deserialise cache row for waste collection events",
+			slog.String("uprn", uprn),
+			slog.String("postcode", postcode),
+			slog.Int("month", month),
+			slog.Int("year", year),
+			slog.Any("error", err),
+		)
 	} else if !errors.Is(err, pgx.ErrNoRows) {
 		ctxLogger.Error(
 			"Failed to query cache row for waste collection events",
