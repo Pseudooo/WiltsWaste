@@ -16,6 +16,7 @@ select address_list
     from address_list_cache
     where postcode = $1 and expires_at < now()
     order by created_at desc
+    limit 1
 `
 
 func (q *Queries) GetAddressListCacheRow(ctx context.Context, postcode string) ([]byte, error) {
