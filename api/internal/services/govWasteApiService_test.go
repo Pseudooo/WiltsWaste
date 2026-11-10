@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Pseudooo/WiltsWaste/internal/db"
 	"github.com/Pseudooo/WiltsWaste/internal/models"
@@ -35,7 +36,13 @@ func (m *mockGovWasteApiServiceQueries) InsertAddressListCacheRow(ctx context.Co
 
 func (m *mockGovWasteApiServiceQueries) GetWasteCollectionEventsCacheRow(ctx context.Context, params db.GetWasteCollectionEventsCacheRowParams) ([]byte, error) {
 	args := m.Called(ctx, params)
-	return args.Get(0).([]byte), args.Error(1)
+
+	bytesResponse := args.Get(0)
+	if bytesResponse == nil {
+		return nil, args.Error(1)
+	} else {
+		return bytesResponse.([]byte), args.Error(1)
+	}
 }
 
 func (m *mockGovWasteApiServiceQueries) InsertWasteCollectionEventsCacheRow(ctx context.Context, params db.InsertWasteCollectionEventsCacheRowParams) error {
@@ -59,7 +66,13 @@ func (m *mockGovWasteApiRepository) GetAddressListFromPostcode(ctx context.Conte
 
 func (m *mockGovWasteApiRepository) GetWasteCollectionEvents(ctx context.Context, uprn string, postcode string, month int, year int) ([]models.WasteCollectionEvent, error) {
 	args := m.Called(ctx, uprn, postcode, month, year)
-	return args.Get(0).([]models.WasteCollectionEvent), args.Error(1)
+
+	wasteCollectionEvents := args.Get(0)
+	if wasteCollectionEvents == nil {
+		return nil, args.Error(1)
+	} else {
+		return wasteCollectionEvents.([]models.WasteCollectionEvent), args.Error(1)
+	}
 }
 
 func TestGetAddressList_GivenCacheEmpty_WhenCalled_ThenCallsApiAndCachesResult(t *testing.T) {
@@ -310,4 +323,212 @@ func TestGetAddressList_GivenCacheEmpty_WhenCalledAndApiFails_ThenErrorReturned_
 	mockQueries.AssertExpectations(t)
 	mockRepository.AssertExpectations(t)
 	mockQueries.AssertNotCalled(t, "InsertAddressListCacheRow", mock.Anything, mock.Anything)
+}
+
+func TestGetWasteCollectionEvents_GivenCacheEmpty_WhenCallsApi_ThenReturnsResultAndInsertsToCache(t *testing.T) {
+	// Arrange
+	wasteCollectionEventsToReturn := []models.WasteCollectionEvent{
+		{
+			Title: "Normal Rubbish",
+			Date:  time.Now().AddDate(0, 0, 1),
+		},
+		{
+			Title: "Recycling",
+			Date:  time.Now().AddDate(0, 0, 5),
+		},
+	}
+
+	mockQueries := new(mockGovWasteApiServiceQueries)
+	mockQueries.On("GetWasteCollectionEventsCacheRow", mock.Anything, mock.Anything).
+		Return(nil, pgx.ErrNoRows)
+	mockQueries.On("InsertWasteCollectionEventsCacheRow", mock.Anything, mock.Anything).
+		Return(nil)
+
+	mockRepository := new(mockGovWasteApiRepository)
+	mockRepository.On("GetWasteCollectionEvents", mock.Anything, "1", "FFA", 01, 2026).
+		Return(wasteCollectionEventsToReturn, nil)
+
+	service := services.NewGovWasteApiService(mockRepository, mockQueries)
+
+	// Act
+	wasteCollectionEvents, err := service.GetWasteCollectionEvents(context.Background(), "1", "FFA", 01, 2026)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.Len(t, wasteCollectionEvents, 2)
+	assert.Equal(t, wasteCollectionEvents[0].Title, "Normal Rubbish")
+	assert.Equal(t, wasteCollectionEvents[1].Title, "Recycling")
+
+	mockQueries.AssertExpectations(t)
+	mockRepository.AssertExpectations(t)
+}
+
+func TestGetWasteCollectionEvents_GivenCachePopulated_WhenCalled_ThenDoesntCallApiReturnsCachedResponse(t *testing.T) {
+	// Arrange
+	cachedWasteCollectionEventsJson := []byte(`[
+		{ "Title": "Normal Rubbish", "Date": "2026-11-10T00:00:00Z" },
+		{ "Title": "Recycling", "Date": "2026-11-15T00:00:00Z" }
+	]`)
+
+	mockQueries := new(mockGovWasteApiServiceQueries)
+	mockQueries.On("GetWasteCollectionEventsCacheRow", mock.Anything, mock.Anything).
+		Return(cachedWasteCollectionEventsJson, nil)
+
+	mockRepository := new(mockGovWasteApiRepository)
+
+	service := services.NewGovWasteApiService(mockRepository, mockQueries)
+
+	// Act
+	wasteCollectionEvents, err := service.GetWasteCollectionEvents(context.Background(), "1", "FFA", 01, 2026)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.Len(t, wasteCollectionEvents, 2)
+	assert.Equal(t, wasteCollectionEvents[0].Title, "Normal Rubbish")
+	assert.Equal(t, wasteCollectionEvents[1].Title, "Recycling")
+
+	mockQueries.AssertExpectations(t)
+	mockRepository.AssertNotCalled(t, "GetWasteCollectionEvents", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockQueries.AssertNotCalled(t, "InsertWasteCollectionEventsCacheRow", mock.Anything, mock.Anything)
+}
+
+func TestGetWasteCollectionEvents_GivenCacheCorrupted_WhenCalled_ThenFallsBackToApi_AndInsertsNewCacheRow(t *testing.T) {
+	// Arrange
+	corruptedCacheJson := []byte(`[
+		{ "foo:" "bar";}
+	]`)
+	wasteCollectionEventsToReturn := []models.WasteCollectionEvent{
+		{
+			Title: "Normal Rubbish",
+			Date:  time.Now().AddDate(0, 0, 1),
+		},
+		{
+			Title: "Recycling",
+			Date:  time.Now().AddDate(0, 0, 5),
+		},
+	}
+
+	mockQueries := new(mockGovWasteApiServiceQueries)
+	mockQueries.On("GetWasteCollectionEventsCacheRow", mock.Anything, mock.Anything).
+		Return(corruptedCacheJson, nil)
+	mockQueries.On("InsertWasteCollectionEventsCacheRow", mock.Anything, mock.Anything).
+		Return(nil)
+
+	mockRepository := new(mockGovWasteApiRepository)
+	mockRepository.On("GetWasteCollectionEvents", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(wasteCollectionEventsToReturn, nil)
+
+	service := services.NewGovWasteApiService(mockRepository, mockQueries)
+
+	// Act
+	wasteCollectionEvents, err := service.GetWasteCollectionEvents(context.Background(), "1", "FFA", 01, 2026)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.Len(t, wasteCollectionEvents, 2)
+	assert.Equal(t, wasteCollectionEvents[0].Title, "Normal Rubbish")
+	assert.Equal(t, wasteCollectionEvents[1].Title, "Recycling")
+
+	mockQueries.AssertExpectations(t)
+	mockRepository.AssertExpectations(t)
+}
+
+func TestGetWasteCollectionEvents_GivenCacheLookupFails_WhenCalled_ThenFallsBackToApi_AndInsertsNewCacheRow(t *testing.T) {
+	// Arrange
+	wasteCollectionEventsToReturn := []models.WasteCollectionEvent{
+		{
+			Title: "Normal Rubbish",
+			Date:  time.Now().AddDate(0, 0, 1),
+		},
+		{
+			Title: "Recycling",
+			Date:  time.Now().AddDate(0, 0, 5),
+		},
+	}
+
+	mockQueries := new(mockGovWasteApiServiceQueries)
+	mockQueries.On("GetWasteCollectionEventsCacheRow", mock.Anything, mock.Anything).
+		Return(nil, errors.New("Something went OOPSIE querying the db"))
+	mockQueries.On("InsertWasteCollectionEventsCacheRow", mock.Anything, mock.Anything).
+		Return(nil)
+
+	mockRepository := new(mockGovWasteApiRepository)
+	mockRepository.On("GetWasteCollectionEvents", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(wasteCollectionEventsToReturn, nil)
+
+	service := services.NewGovWasteApiService(mockRepository, mockQueries)
+
+	// Act
+	wasteCollectionEvents, err := service.GetWasteCollectionEvents(context.Background(), "1", "FFA", 01, 2026)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.Len(t, wasteCollectionEvents, 2)
+	assert.Equal(t, wasteCollectionEvents[0].Title, "Normal Rubbish")
+	assert.Equal(t, wasteCollectionEvents[1].Title, "Recycling")
+
+	mockQueries.AssertExpectations(t)
+	mockRepository.AssertExpectations(t)
+}
+
+func TestGetWasteCollectionEvents_GivenCacheInsertFails_WhenCalled_ThenReturnsResponse(t *testing.T) {
+	// Arrange
+	wasteCollectionEventsToReturn := []models.WasteCollectionEvent{
+		{
+			Title: "Normal Rubbish",
+			Date:  time.Now().AddDate(0, 0, 1),
+		},
+		{
+			Title: "Recycling",
+			Date:  time.Now().AddDate(0, 0, 5),
+		},
+	}
+
+	mockQueries := new(mockGovWasteApiServiceQueries)
+	mockQueries.On("GetWasteCollectionEventsCacheRow", mock.Anything, mock.Anything).
+		Return(nil, pgx.ErrNoRows)
+	mockQueries.On("InsertWasteCollectionEventsCacheRow", mock.Anything, mock.Anything).
+		Return(errors.New("Something went OOPSIE writing to the db"))
+
+	mockRepository := new(mockGovWasteApiRepository)
+	mockRepository.On("GetWasteCollectionEvents", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(wasteCollectionEventsToReturn, nil)
+
+	service := services.NewGovWasteApiService(mockRepository, mockQueries)
+
+	// Act
+	wasteCollectionEvents, err := service.GetWasteCollectionEvents(context.Background(), "1", "FFA", 01, 2026)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.Len(t, wasteCollectionEvents, 2)
+	assert.Equal(t, wasteCollectionEvents[0].Title, "Normal Rubbish")
+	assert.Equal(t, wasteCollectionEvents[1].Title, "Recycling")
+
+	mockQueries.AssertExpectations(t)
+	mockRepository.AssertExpectations(t)
+}
+
+func TestGetWasteCollectionEvents_GivenApiReturnsError_WhenCalled_ThenReturnsErrror(t *testing.T) {
+	// Arrange
+	mockQueries := new(mockGovWasteApiServiceQueries)
+	mockQueries.On("GetWasteCollectionEventsCacheRow", mock.Anything, mock.Anything).
+		Return(nil, pgx.ErrNoRows)
+
+	mockRepository := new(mockGovWasteApiRepository)
+	mockRepository.On("GetWasteCollectionEvents", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, errors.New("Something is bad in the response"))
+
+	service := services.NewGovWasteApiService(mockRepository, mockQueries)
+
+	// Act
+	wasteCollectionEvents, err := service.GetWasteCollectionEvents(context.Background(), "1", "FFA", 01, 2026)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Nil(t, wasteCollectionEvents)
+
+	mockQueries.AssertExpectations(t)
+	mockRepository.AssertExpectations(t)
+	mockQueries.AssertNotCalled(t, "InsertWasteCollectionEventsCacheRow", mock.Anything, mock.Anything)
 }
