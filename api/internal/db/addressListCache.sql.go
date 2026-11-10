@@ -14,7 +14,7 @@ import (
 const getAddressListCacheRow = `-- name: GetAddressListCacheRow :one
 select address_list
     from address_list_cache
-    where postcode = $1 and expires_at < now()
+    where postcode = $1 and expires_at > now()
     order by created_at desc
     limit 1
 `
