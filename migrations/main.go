@@ -12,7 +12,7 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-//go:embed migrations/*.sql
+//go:embed sql/*.sql
 var embeddedMigrations embed.FS
 
 func main() {
