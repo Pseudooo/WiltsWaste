@@ -5,8 +5,27 @@ on:
     branches: [ "master" ]
 
 jobs:
+  build-migrations:
+    name: Build Migrations Project
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛒 Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27' # The Go version to download (if necessary) and use.
+
+      - name: 📦 Install Dependencies
+        working-directory: ./migrations
+        run: go mod download
+
+      - name: 🔨 Build
+        working-directory: ./migrations
+        run: go build .
+
   build-api:
-    name: Build API project
+    name: Build API Project
     runs-on: ubuntu-latest
     steps:
       - name: 🛒 Checkout
@@ -29,7 +48,7 @@ jobs:
         run: go test ./...
 
   build-web:
-    name: Build Web Client
+    name: Build Web Project
     runs-on: ubuntu-latest
     steps:
       - name: 🛒 Checkout
