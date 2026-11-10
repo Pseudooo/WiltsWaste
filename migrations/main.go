@@ -33,7 +33,7 @@ func main() {
 		panic(fmt.Errorf("Failed to set postgres dialect for goose: %w", err))
 	}
 
-	if err := goose.Up(db, "migrations"); err != nil {
+	if err := goose.Up(db, "sql"); err != nil {
 		panic(fmt.Errorf("Failed to run migrations: %w", err))
 	}
 }
