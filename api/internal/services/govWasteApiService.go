@@ -1,0 +1,168 @@
+package services
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"time"
+
+	"github.com/Pseudooo/WiltsWaste/internal/db"
+	"github.com/Pseudooo/WiltsWaste/internal/models"
+	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
+	"github.com/Pseudooo/WiltsWaste/internal/telemetry"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+type GovWasteApiServiceQueries interface {
+	GetAddressListCacheRow(ctx context.Context, postcode string) ([]byte, error)
+	InsertAddressListCacheRow(ctx context.Context, params db.InsertAddressListCacheRowParams) error
+	GetWasteCollectionEventsCacheRow(ctx context.Context, params db.GetWasteCollectionEventsCacheRowParams) ([]byte, error)
+	InsertWasteCollectionEventsCacheRow(ctx context.Context, params db.InsertWasteCollectionEventsCacheRowParams) error
+}
+
+type GovWasteApiService interface {
+	GetAddressListFromPostcode(ctx context.Context, postcode string) ([]models.PostcodeAddress, error)
+	GetWasteCollectionEvents(ctx context.Context, uprn string, postcode string, month int, year int) ([]models.WasteCollectionEvent, error)
+}
+
+type govWasteApiService struct {
+	repository govWasteApi.GovWasteApiRepository
+	queries    GovWasteApiServiceQueries
+}
+
+func NewGovWasteApiService(
+	govWasteApiRepository govWasteApi.GovWasteApiRepository,
+	queries GovWasteApiServiceQueries,
+) GovWasteApiService {
+	return &govWasteApiService{
+		repository: govWasteApiRepository,
+		queries:    queries,
+	}
+}
+
+func (s *govWasteApiService) GetAddressListFromPostcode(ctx context.Context, postcode string) ([]models.PostcodeAddress, error) {
+	ctxLogger := telemetry.GetLoggerFromContext(ctx)
+
+	cachedResponse, err := s.queries.GetAddressListCacheRow(ctx, postcode)
+	if err == nil {
+		var addressList []models.PostcodeAddress
+		if err := json.Unmarshal(cachedResponse, &addressList); err == nil {
+			return addressList, nil
+		}
+
+		// Json deserialisation failed from the cache
+		ctxLogger.Error("Failed to deserialise cache row for address list", slog.Any("error", err))
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		ctxLogger.Error("Failed to query address list cache table", slog.Any("error", err))
+	}
+
+	addressList, err := s.repository.GetAddressListFromPostcode(ctx, postcode)
+	if err != nil {
+		return nil, err
+	}
+
+	addressListJsonBytes, err := json.Marshal(addressList)
+	if err == nil {
+		err = s.queries.InsertAddressListCacheRow(ctx, db.InsertAddressListCacheRowParams{
+			Postcode:    postcode,
+			ExpiresAt:   pgtype.Timestamp{Valid: true, Time: time.Now().AddDate(0, 0, 1)},
+			AddressList: addressListJsonBytes,
+		})
+		if err != nil {
+			ctxLogger.Error(
+				"Failed to insert address list cache row",
+				slog.String("postcode", postcode),
+				slog.Any("error", err),
+			)
+		}
+	} else {
+		ctxLogger.Error(
+			"Failed to serialise address list response",
+			slog.Any("error", err),
+		)
+	}
+
+	return addressList, nil
+}
+
+func (s *govWasteApiService) GetWasteCollectionEvents(
+	ctx context.Context,
+	uprn string,
+	postcode string,
+	month int,
+	year int,
+) ([]models.WasteCollectionEvent, error) {
+	ctxLogger := telemetry.GetLoggerFromContext(ctx)
+
+	cachedResponse, err := s.queries.GetWasteCollectionEventsCacheRow(ctx, db.GetWasteCollectionEventsCacheRowParams{
+		Uprn:     uprn,
+		Postcode: postcode,
+		Month:    int32(month),
+		Year:     int32(year),
+	})
+	if err == nil {
+		var collectionEvents []models.WasteCollectionEvent
+		if err := json.Unmarshal(cachedResponse, &collectionEvents); err == nil {
+			return collectionEvents, nil
+		}
+
+		ctxLogger.Error(
+			"Failed to deserialise cache row for waste collection events",
+			slog.String("uprn", uprn),
+			slog.String("postcode", postcode),
+			slog.Int("month", month),
+			slog.Int("year", year),
+			slog.Any("error", err),
+		)
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		ctxLogger.Error(
+			"Failed to query cache row for waste collection events",
+			slog.String("uprn", uprn),
+			slog.String("postcode", postcode),
+			slog.Int("month", month),
+			slog.Int("year", year),
+			slog.Any("error", err),
+		)
+	}
+
+	wasteCollectionEvents, err := s.repository.GetWasteCollectionEvents(ctx, uprn, postcode, month, year)
+	if err != nil {
+		return nil, err
+	}
+
+	wasteCollectionEventsBytes, err := json.Marshal(&wasteCollectionEvents)
+	if err != nil {
+		ctxLogger.Error(
+			"Failed to serialize waste collection events to json",
+			slog.String("uprn", uprn),
+			slog.String("postcode", postcode),
+			slog.Int("month", month),
+			slog.Int("year", year),
+			slog.Any("error", err),
+		)
+		return wasteCollectionEvents, nil
+	}
+
+	err = s.queries.InsertWasteCollectionEventsCacheRow(ctx, db.InsertWasteCollectionEventsCacheRowParams{
+		Uprn:                  uprn,
+		Postcode:              postcode,
+		Month:                 int32(month),
+		Year:                  int32(year),
+		ExpiresAt:             pgtype.Timestamp{Valid: true, Time: time.Now().AddDate(0, 0, 7)},
+		WasteCollectionEvents: wasteCollectionEventsBytes,
+	})
+	if err != nil {
+		ctxLogger.Error(
+			"Failed to insert waste collection events into cache",
+			slog.String("uprn", uprn),
+			slog.String("postcode", postcode),
+			slog.Int("month", month),
+			slog.Int("year", year),
+			slog.Any("error", err),
+		)
+	}
+
+	return wasteCollectionEvents, nil
+}

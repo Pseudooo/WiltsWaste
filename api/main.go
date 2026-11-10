@@ -5,14 +5,19 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 	"uuid"
 
-	telemetry "github.com/Pseudooo/WiltsWaste/internal"
 	"github.com/Pseudooo/WiltsWaste/internal/addresslist"
 	"github.com/Pseudooo/WiltsWaste/internal/calendar"
+	"github.com/Pseudooo/WiltsWaste/internal/configuration"
+	"github.com/Pseudooo/WiltsWaste/internal/db"
 	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
+	"github.com/Pseudooo/WiltsWaste/internal/services"
+	"github.com/Pseudooo/WiltsWaste/internal/telemetry"
 	externalHttpClient "github.com/Pseudooo/WiltsWaste/internal/util"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -22,7 +27,9 @@ import (
 const LoggerKey = "slog_logger"
 
 func main() {
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	shutdownMetrics, err := telemetry.InitMetrics(ctx)
 	if err != nil {
 		panic(err)
@@ -33,27 +40,37 @@ func main() {
 		}
 	}()
 
-	globalLogAttributes := []slog.Attr{
-		slog.String("service.name", "wilts-waste-api"),
-		slog.String("service.version", "0.1.0"),
+	globalLogger := telemetry.Logger
+
+	databaseConfiguration, err := configuration.ReadDatabaseConfigurationFromEnv()
+	if err != nil {
+		panic(fmt.Errorf("Failed to read database configuration: %w", err))
 	}
-	loggingHandler := slog.NewJSONHandler(os.Stdout, nil).WithAttrs(globalLogAttributes)
-	logger := slog.New(loggingHandler)
+
+	sqlDb, err := databaseConfiguration.CreateDatabase(ctx)
+	if err != nil {
+		panic(err)
+	}
+	defer sqlDb.Close()
+
+	queries := db.New(sqlDb)
 
 	govWasteApiClient := externalHttpClient.CreateExternalHttpClient("gov-waste-api")
 	govWasteApiRepository := govWasteApi.CreateRepository(govWasteApiClient, "https://ilambassadorformsprod.azurewebsites.net")
 
+	govWasteApiService := services.NewGovWasteApiService(govWasteApiRepository, queries)
+
 	calendarHandler := &calendar.CalendarHandler{
-		Logger:     logger,
-		Repository: govWasteApiRepository,
+		Logger:          globalLogger,
+		WasteApiService: govWasteApiService,
 	}
 	addressListHandler := &addresslist.AddressListHandler{
-		Logger:     logger,
-		Repository: govWasteApiRepository,
+		Logger:          globalLogger,
+		WasteApiService: govWasteApiService,
 	}
 
 	router := gin.New()
-	router.Use(SlogMiddleware(logger))
+	router.Use(SlogMiddleware(globalLogger))
 	router.Use(otelgin.Middleware("waste-collection-api"))
 	router.Use(gin.Recovery())
 	router.Use(cors.Default())

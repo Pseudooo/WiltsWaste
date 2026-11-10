@@ -4,13 +4,13 @@ import (
 	"log/slog"
 	"net/http"
 
-	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
+	"github.com/Pseudooo/WiltsWaste/internal/services"
 	"github.com/gin-gonic/gin"
 )
 
 type AddressListHandler struct {
-	Logger     *slog.Logger
-	Repository *govWasteApi.GovWasteApiRepository
+	Logger          *slog.Logger
+	WasteApiService services.GovWasteApiService
 }
 
 type AddressListQuery struct {
@@ -31,7 +31,7 @@ func (h *AddressListHandler) GetAddressList(ctx *gin.Context) {
 		return
 	}
 
-	results, err := h.Repository.GetAddressListFromPostcode(ctx, query.Postcode)
+	results, err := h.WasteApiService.GetAddressListFromPostcode(ctx, query.Postcode)
 	if err != nil {
 		logger.Error("An error occurred when calling gov address list endpoint", slog.Any("error", err))
 		ctx.AbortWithStatus(http.StatusInternalServerError)

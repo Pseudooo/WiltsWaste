@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/Pseudooo/WiltsWaste/internal/models"
-	govWasteApi "github.com/Pseudooo/WiltsWaste/internal/repositories"
+	"github.com/Pseudooo/WiltsWaste/internal/services"
 	ics "github.com/arran4/golang-ical"
 	"github.com/gin-gonic/gin"
 )
 
 type CalendarHandler struct {
-	Logger     *slog.Logger
-	Repository *govWasteApi.GovWasteApiRepository
+	Logger          *slog.Logger
+	WasteApiService services.GovWasteApiService
 }
 
 type CalendarQuery struct {
@@ -54,7 +54,7 @@ func (h *CalendarHandler) GetCalendar(ctx *gin.Context) {
 			}
 
 			evalTime := currentTime.AddDate(0, i, 0)
-			events, err := h.Repository.GetWasteCollectionEvents(ctx, query.Uprn, query.Postcode, int(evalTime.Month()), evalTime.Year())
+			events, err := h.WasteApiService.GetWasteCollectionEvents(ctx, query.Uprn, query.Postcode, int(evalTime.Month()), evalTime.Year())
 			if err != nil {
 				// Mark that an error occurred
 				if hasError.CompareAndSwap(0, 1) {
