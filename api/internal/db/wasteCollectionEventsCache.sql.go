@@ -11,6 +11,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteExpiredWasteCollectionEventsCacheRows = `-- name: DeleteExpiredWasteCollectionEventsCacheRows :execrows
+delete from waste_collection_events_cache
+    where expires_at < now()
+`
+
+func (q *Queries) DeleteExpiredWasteCollectionEventsCacheRows(ctx context.Context) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteExpiredWasteCollectionEventsCacheRows)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getWasteCollectionEventsCacheRow = `-- name: GetWasteCollectionEventsCacheRow :one
 select waste_collection_events
     from waste_collection_events_cache

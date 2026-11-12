@@ -8,3 +8,7 @@ select address_list
     where postcode = @postcode and expires_at > now()
     order by created_at desc
     limit 1;
+
+-- name: DeleteExpiredAddressListCacheRows :execrows 
+delete from address_list_cache
+    where expires_at < now();
