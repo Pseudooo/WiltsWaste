@@ -11,6 +11,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteExpiredAddressListCacheRows = `-- name: DeleteExpiredAddressListCacheRows :execrows
+delete from address_list_cache
+    where expires_at < now()
+`
+
+func (q *Queries) DeleteExpiredAddressListCacheRows(ctx context.Context) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteExpiredAddressListCacheRows)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getAddressListCacheRow = `-- name: GetAddressListCacheRow :one
 select address_list
     from address_list_cache

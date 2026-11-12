@@ -12,3 +12,7 @@ select waste_collection_events
         and expires_at > now()
     order by created_at desc
     limit 1;
+
+-- name: DeleteExpiredWasteCollectionEventsCacheRows :execrows
+delete from waste_collection_events_cache
+    where expires_at < now();

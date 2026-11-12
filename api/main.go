@@ -19,6 +19,7 @@ import (
 	"github.com/Pseudooo/WiltsWaste/internal/services"
 	"github.com/Pseudooo/WiltsWaste/internal/telemetry"
 	externalHttpClient "github.com/Pseudooo/WiltsWaste/internal/util"
+	"github.com/Pseudooo/WiltsWaste/internal/workers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
@@ -54,6 +55,9 @@ func main() {
 	defer sqlDb.Close()
 
 	queries := db.New(sqlDb)
+
+	cacheSweeper := workers.NewCacheSweeperWorker(queries)
+	go cacheSweeper.StartBackgroundWorker(ctx)
 
 	govWasteApiClient := externalHttpClient.CreateExternalHttpClient("gov-waste-api")
 	govWasteApiRepository := govWasteApi.CreateRepository(govWasteApiClient, "https://ilambassadorformsprod.azurewebsites.net")
