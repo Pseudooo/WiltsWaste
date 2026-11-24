@@ -30,9 +30,8 @@
       <p><strong>UPRN:</strong> <span class="font-mono text-xs">{uprn}</span></p>
     </div>
     {#if !postcode || !uprn}
-      <p class="text-sm text-destructive">Missing lookup information. Please go back and try again.</p>
-    {/if}
-
+    <p class="text-sm text-destructive">Missing lookup information. Please go back and try again.</p>
+    {:else}
     <div class="space-y-4 text-center p-4">
       <p class="text-sm text-muted-foreground">
         Subscribe to the calendar feed on your device to keep up to date on your upcoming collection dates
@@ -58,6 +57,7 @@
         </Button>
       </div>
     </div>
+    {/if}
   </CardContent>
   <CardFooter class="justify-center border-t pt-4">
     <Link to="/">
