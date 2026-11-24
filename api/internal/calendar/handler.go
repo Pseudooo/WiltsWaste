@@ -1,16 +1,18 @@
 package calendar
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
-	"sync"
-	"sync/atomic"
+	"strings"
 	"time"
 
 	"github.com/Pseudooo/WiltsWaste/internal/models"
 	"github.com/Pseudooo/WiltsWaste/internal/services"
+	"github.com/Pseudooo/WiltsWaste/internal/telemetry"
 	ics "github.com/arran4/golang-ical"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
 )
 
 type CalendarHandler struct {
@@ -24,12 +26,7 @@ type CalendarQuery struct {
 }
 
 func (h *CalendarHandler) GetCalendar(ctx *gin.Context) {
-	logger := h.Logger
-	if ctxLogger, exists := ctx.Get("slog_logger"); exists {
-		if l, ok := ctxLogger.(*slog.Logger); ok {
-			logger = l
-		}
-	}
+	logger := telemetry.GetLoggerFromContext(ctx)
 
 	var query CalendarQuery
 	if err := ctx.ShouldBindQuery(&query); err != nil {
@@ -37,51 +34,61 @@ func (h *CalendarHandler) GetCalendar(ctx *gin.Context) {
 		return
 	}
 
-	var allEvents []models.WasteCollectionEvent
-	currentTime := time.Now()
-
-	results := make([][]models.WasteCollectionEvent, 3)
-	var wg sync.WaitGroup
-	var hasError atomic.Int32
-
-	for i := range 3 {
-		wg.Add(1)
-		go func(index int) {
-			defer wg.Done()
-
-			if hasError.Load() == 1 {
-				return
-			}
-
-			evalTime := currentTime.AddDate(0, i, 0)
-			events, err := h.WasteApiService.GetWasteCollectionEvents(ctx, query.Uprn, query.Postcode, int(evalTime.Month()), evalTime.Year())
-			if err != nil {
-				// Mark that an error occurred
-				if hasError.CompareAndSwap(0, 1) {
-					logger.Error("Error when calling gov api", slog.Any("error", err))
-					ctx.AbortWithError(500, err)
-				}
-				return
-			}
-
-			results[index] = events
-		}(i)
-	}
-
-	wg.Wait()
-	if hasError.Load() == 1 {
+	wasteCollectionEvents, err := h.getWasteCollectionEvents(ctx, query.Uprn, query.Postcode)
+	if err != nil {
+		logger.Error("Failed to lookup waste collection events", slog.Any("error", err))
+		ctx.AbortWithStatus(500)
 		return
 	}
 
-	for _, events := range results {
-		allEvents = append(allEvents, events...)
+	ctx.Header("Vary", "Accept")
+
+	accept := ctx.GetHeader("Accept")
+	if strings.Contains(accept, "application/json") {
+		// Client is requesting json data so events can be returned directly
+		ctx.Header("Content-Type", "application/json")
+		ctx.JSON(http.StatusOK, wasteCollectionEvents)
+		return
 	}
 
-	calendar := buildCalendarFromWasteCollectionEvents(allEvents)
+	// Otherwise default to the text/calendar ICS content
+	calendar := buildCalendarFromWasteCollectionEvents(wasteCollectionEvents)
 
 	ctx.Header("Content-Type", "text/calendar; charset=utf-8")
 	ctx.Header("Content-Disposition", `attachment; filename="calendar.ics"`)
 	ctx.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 
 	ctx.String(http.StatusOK, calendar.Serialize(ics.WithNewLineWindows))
+}
+
+func (h *CalendarHandler) getWasteCollectionEvents(ctx context.Context, uprn string, postcode string) ([]models.WasteCollectionEvent, error) {
+	currentTime := time.Now()
+	results := make([][]models.WasteCollectionEvent, 3)
+
+	group, groupCtx := errgroup.WithContext(ctx)
+
+	for i := range 3 {
+		index := i
+		group.Go(func() error {
+			evalTime := currentTime.AddDate(0, index, 0)
+			events, err := h.WasteApiService.GetWasteCollectionEvents(groupCtx, uprn, postcode, int(evalTime.Month()), evalTime.Year())
+			if err != nil {
+				return err
+			}
+
+			results[index] = events
+			return nil
+		})
+	}
+
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+
+	var allEvents []models.WasteCollectionEvent
+	for _, events := range results {
+		allEvents = append(allEvents, events...)
+	}
+
+	return allEvents, nil
 }
