@@ -35,10 +35,10 @@
 
     <div class="space-y-4 text-center p-4">
       <p class="text-sm text-muted-foreground">
-        Subscribe to get automatic garbage collection updates synced straight to your device.
+        Subscribe to the calendar feed on your device to keep up to date on your upcoming collection dates
       </p>
 
-      <div>
+      <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-2">
         <Button
           href={googleCalendarSubscriptionUrl} 
           target="_blank" 
