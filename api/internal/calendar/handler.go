@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Pseudooo/WiltsWaste/internal/models"
@@ -44,6 +45,17 @@ func (h *CalendarHandler) GetCalendar(ctx *gin.Context) {
 		return
 	}
 
+	ctx.Header("Vary", "Accept")
+
+	accept := ctx.GetHeader("Accept")
+	if strings.Contains(accept, "application/json") {
+		// Client is requesting json data so events can be returned directly
+		ctx.Header("Content-Type", "application/json")
+		ctx.JSON(http.StatusOK, wasteCollectionEvents)
+		return
+	}
+
+	// Otherwise default to the text/calendar ICS content
 	calendar := buildCalendarFromWasteCollectionEvents(wasteCollectionEvents)
 
 	ctx.Header("Content-Type", "text/calendar; charset=utf-8")
