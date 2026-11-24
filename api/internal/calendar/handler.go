@@ -9,6 +9,7 @@ import (
 
 	"github.com/Pseudooo/WiltsWaste/internal/models"
 	"github.com/Pseudooo/WiltsWaste/internal/services"
+	"github.com/Pseudooo/WiltsWaste/internal/telemetry"
 	ics "github.com/arran4/golang-ical"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
@@ -25,12 +26,7 @@ type CalendarQuery struct {
 }
 
 func (h *CalendarHandler) GetCalendar(ctx *gin.Context) {
-	logger := h.Logger
-	if ctxLogger, exists := ctx.Get("slog_logger"); exists {
-		if l, ok := ctxLogger.(*slog.Logger); ok {
-			logger = l
-		}
-	}
+	logger := telemetry.GetLoggerFromContext(ctx)
 
 	var query CalendarQuery
 	if err := ctx.ShouldBindQuery(&query); err != nil {
