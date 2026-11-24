@@ -6,6 +6,11 @@ export interface PostcodeAddress {
     uprn: string;
 }
 
+export interface WasteCollectionEvent {
+    title: string;
+    date: string;
+}
+
 export async function fetchAddressesForPostcode(postcode: string): Promise<PostcodeAddress[]> {
     const url = new URL("/addresslist", baseUrl);
     url.searchParams.append("postcode", postcode);
@@ -16,6 +21,21 @@ export async function fetchAddressesForPostcode(postcode: string): Promise<Postc
     }
 
     const data: PostcodeAddress[] = await response.json();
+    return data;
+}
+
+export async function fetchWasteCollectionEvents(postcode: string, uprn: string): Promise<WasteCollectionEvent[]> {
+    const url = new URL("/calendar", baseUrl);
+    url.searchParams.append("postcode", postcode);
+    url.searchParams.append("uprn", uprn);
+
+    const response = await fetch(url, {
+        headers: {
+            "Accept": "application/json"
+        }
+    })
+
+    const data: WasteCollectionEvent[] = await response.json();
     return data;
 }
 
