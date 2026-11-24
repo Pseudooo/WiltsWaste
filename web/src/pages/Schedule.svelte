@@ -60,7 +60,7 @@
       Collection Schedule
     </CardTitle>
   </CardHeader>
-  <CardContent class="space-y-4 text-left">
+  <CardContent class="space-y-2 text-left">
     <div class="rounded-lg bg-muted p-3 text-sm space-y-1">
       <p><strong>Postcode:</strong> <span class="uppercase">{postcode}</span></p>
       <p><strong>UPRN:</strong> <span class="font-mono text-xs">{uprn}</span></p>
@@ -84,7 +84,7 @@
           No upcoming collections found.
         </div>
       {:else}
-        <div class="max-h-32 sm:max-h-72 overflow-y-auto rounded-md border divide-y">
+        <div class="max-h-48 sm:max-h-72 overflow-y-auto rounded-md border divide-y">
           {#each wasteCollectionEvents as event}
             <div class="flex items-center justify-between p-3 text-sm hover:bg-muted/50 transition-colors">
               <div class="flex items-center gap-2.5 font-medium">
@@ -100,12 +100,12 @@
       {/if}
     </div>
 
-    <div class="space-y-2 text-center p-4">
+    <div class="space-y-2 text-center flex flex-col gap-1 justify-center">
       <p class="text-sm text-muted-foreground">
         Subscribe to the calendar feed on your device to keep up to date on your upcoming collection dates
       </p>
 
-      <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-2">
+      <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-1">
         <Button
           href={googleCalendarSubscriptionUrl} 
           target="_blank" 
