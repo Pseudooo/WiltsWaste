@@ -190,7 +190,7 @@ func parseWasteCollectionEventsFromReader(reader io.Reader) ([]models.WasteColle
 		return nil, err
 	}
 
-	var events []models.WasteCollectionEvent
+	events := make([]models.WasteCollectionEvent, 0)
 
 	doc.Find(".cal-month-box .rc-event-container").Each(func(i int, s *goquery.Selection) {
 		eventTitle := strings.TrimSpace(s.Find("span").Text())
