@@ -85,7 +85,7 @@ func (h *CalendarHandler) getWasteCollectionEvents(ctx context.Context, uprn str
 		return nil, err
 	}
 
-	var allEvents []models.WasteCollectionEvent
+	allEvents := make([]models.WasteCollectionEvent, 0)
 	for _, events := range results {
 		allEvents = append(allEvents, events...)
 	}
